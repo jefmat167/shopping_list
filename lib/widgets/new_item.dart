@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shopping_list/data/categories.dart';
 import 'package:shopping_list/models/category.dart';
-// import 'package:shopping_list/models/grocery_item.dart';
+import 'package:shopping_list/models/grocery_item.dart';
 
 import 'package:http/http.dart' as http;
 
@@ -37,17 +37,16 @@ class _NewItemState extends State<NewItem>{
           "category": _selectedCategory.title
         })
       );
-      print("status code here=> ${response.statusCode}");
-      print("body here=> ${response.body}");
+      final Map<String, dynamic> resData = json.decode(response.body);
       if (context.mounted) {
         // ignore: use_build_context_synchronously
         Navigator.of(context).pop(
-        // GroceryItem(
-        //   id: DateTime.now().toString(), 
-        //   name: _enteredName, 
-        //   quantity: _enteredQuantity, 
-        //   category: _selectedCategory
-        // )
+          GroceryItem(
+            id: resData["name"], 
+            name: _enteredName, 
+            quantity: _enteredQuantity, 
+            category: _selectedCategory
+          )
         );
       }
       return;
