@@ -27,29 +27,41 @@ class _GroceryListState extends State<GroceryList> {
 
   void _loadItems () async {
     final url = Uri.https("flutter-prep-5bf82-default-rtdb.firebaseio.com", "shopping-list.json");
-    final response = await http.get(url);
-    if (response.statusCode >= 400) {
+    try {
+      final response = await http.get(url);
+      if (response.statusCode >= 400) {
+        setState(() {
+          error = "Can't get items right now, pls try again later.";
+        });
+      }
+      if (response.body == "null") {
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+      final Map<String, dynamic> listData = json.decode(response.body);
+      final List<GroceryItem> loadedItems = [];
+      for (var item in listData.entries) {
+        final category = categories.entries.firstWhere((catItem) => catItem.value.title == item.value["category"]).value;
+        loadedItems.add(
+          GroceryItem(
+            id: item.key, 
+            name: item.value["name"], 
+            quantity: item.value["quantity"],
+            category: category
+          )
+        );
+      }
       setState(() {
-        error = "Can't get items right now, pls try again later.";
+        _groceryItems = loadedItems;
+        _isLoading = false;
+      });
+    } on Exception {
+      setState(() {
+          error = "Something went wrong, please try again later.";
       });
     }
-    final Map<String, dynamic> listData = json.decode(response.body);
-    final List<GroceryItem> loadedItems = [];
-    for (var item in listData.entries) {
-      final category = categories.entries.firstWhere((catItem) => catItem.value.title == item.value["category"]).value;
-      loadedItems.add(
-        GroceryItem(
-          id: item.key, 
-          name: item.value["name"], 
-          quantity: item.value["quantity"],
-          category: category
-        )
-      );
-    }
-    setState(() {
-      _groceryItems = loadedItems;
-      _isLoading = false;
-    });
   }
 
   void _addItem() async {
@@ -67,10 +79,20 @@ class _GroceryListState extends State<GroceryList> {
   }
 
 
-  void _removeItem(GroceryItem item){
-    setState(() {
+  void _removeItem(GroceryItem item) async {
+     setState(() {
       _groceryItems.remove(item);
     });
+    final itemIndex = _groceryItems.indexOf(item);
+    final url = Uri.https("flutter-prep-5bf82-default-rtdb.firebaseio.com", "shopping-list/${item.id}.json");
+    final response = await http.delete(url);
+    if (response.statusCode >= 400) {
+      //a dialog or a snackbar can be produced here
+      setState(() {
+        _groceryItems.insert(itemIndex, item);
+      });
+    }
+   
   }
   @override
   Widget build(BuildContext context) {
