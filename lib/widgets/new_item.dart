@@ -22,9 +22,13 @@ class _NewItemState extends State<NewItem>{
   var _enteredName = '';
   var _enteredQuantity = 1;
   var _selectedCategory = categories[Categories.vegetable]!;
+  var _isSEnding = false;
   void _saveItem() async {
-    if (_formKey.currentState!.validate()) {
+    if (_formKey.currentState!.validate()) { 
       _formKey.currentState!.save();
+      setState(() {
+        _isSEnding = true;
+      });
       final url = Uri.https("flutter-prep-5bf82-default-rtdb.firebaseio.com", "shopping-list.json");
       final response = await http.post(
         url,
@@ -144,14 +148,16 @@ class _NewItemState extends State<NewItem>{
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
-                    onPressed: (){
+                    onPressed: _isSEnding ? null : (){
                       _formKey.currentState!.reset();
                     }, 
                     child: const Text("Reset")
                   ),
                   ElevatedButton(
-                    onPressed: _saveItem, 
-                    child: const Text("Add item")
+                    onPressed: _isSEnding ? null : _saveItem, 
+                    child: _isSEnding ?
+                      const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(),) : 
+                      const Text("Add item")
                   )
                 ],
               )
